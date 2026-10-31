@@ -2,6 +2,8 @@ package net.velalab.radio
 
 import android.content.ComponentName
 import android.os.Bundle
+import android.view.KeyEvent as AndroidKeyEvent
+import androidx.compose.ui.input.key.nativeKeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -123,28 +125,64 @@ class MainActivity : ComponentActivity() {
      ) {
       items(filtered.size) { i ->
        val s = filtered[i]
-       var focused by remember { mutableStateOf(false) }
-       Column(Modifier
-        .onFocusChanged { focused = it.isFocused || it.hasFocus }
-        .border(if (focused) 3.dp else 1.dp, if (focused) Color(0xFF91B6FF) else Color(0xFF33465F), RoundedCornerShape(16.dp))
-        .background(if (focused) Color(0xFF3B599E) else listOf(Color(0xFF164F80), Color(0xFF673C93), Color(0xFF9B3769), Color(0xFF23766F), Color(0xFF985B27))[i % 5], RoundedCornerShape(16.dp))
-        .clickable(enabled = ready.value) { controller?.let { p -> p.setMediaItem(MediaItem.Builder().setMediaId(s.id).setUri(s.stream).setMediaMetadata(MediaMetadata.Builder().setTitle(s.name).build()).build()); p.prepare(); p.play(); nowPlaying = s.name; selectedId = s.id; playing = true; prefs.edit().putString("last_id", s.id).apply() } }
-        .padding(14.dp)) {
-        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-         if (s.logo.startsWith("https://")) {
-          AsyncImage(model = s.logo, contentDescription = "โลโก้ " + s.name, modifier = Modifier.size(56.dp), contentScale = ContentScale.Fit)
-         } else {
-          Text("♫", color = Color(0xFF91B6FF), style = MaterialTheme.typography.headlineLarge)
-         }
-         Text(s.name, fontWeight = FontWeight.SemiBold, maxLines = 2, minLines = 2, color = Color.White)
-        }
-        Spacer(Modifier.height(10.dp))
-        Text("OK เพื่อฟัง", color = Color(0xFFBBD5FF), style = MaterialTheme.typography.labelSmall)
-       }
-       FocusButton(if (s.id in favorites) "★ รายการโปรด" else "☆ เพิ่มรายการโปรด", {
+       var focused by remember(s.id) { mutableStateOf(false) }
+       var longPressHandled by remember(s.id) { mutableStateOf(false) }
+       val toggleFavorite = {
         favorites = favorites.toMutableSet().apply { if (!add(s.id)) remove(s.id) }.toSet()
         prefs.edit().putStringSet("favorites", favorites).apply()
-       })
+       }
+       Column(
+        Modifier
+         .onPreviewKeyEvent { event ->
+          val native = event.nativeKeyEvent
+          val select = native.keyCode == AndroidKeyEvent.KEYCODE_DPAD_CENTER ||
+           native.keyCode == AndroidKeyEvent.KEYCODE_ENTER ||
+           native.keyCode == AndroidKeyEvent.KEYCODE_NUMPAD_ENTER
+          if (!select) false
+          else if (native.action == AndroidKeyEvent.ACTION_DOWN && native.repeatCount >= 1) {
+           if (!longPressHandled) { toggleFavorite(); longPressHandled = true }
+           true
+          } else if (native.action == AndroidKeyEvent.ACTION_UP && longPressHandled) {
+           longPressHandled = false
+           true
+          } else false
+         }
+         .onFocusChanged { focused = it.isFocused }
+         .border(if (focused) 3.dp else 1.dp,
+          if (focused) Color.White else Color(0xFF405473), RoundedCornerShape(16.dp))
+         .background(
+          if (focused) Color(0xFF3B599E)
+          else listOf(Color(0xFF164F80), Color(0xFF673C93), Color(0xFF9B3769),
+           Color(0xFF23766F), Color(0xFF985B27))[i % 5],
+          RoundedCornerShape(16.dp))
+         .clickable(enabled = ready.value) {
+          controller?.let { p ->
+           p.setMediaItem(MediaItem.Builder().setMediaId(s.id).setUri(s.stream)
+            .setMediaMetadata(MediaMetadata.Builder().setTitle(s.name).build()).build())
+           p.prepare(); p.play()
+           nowPlaying = s.name; selectedId = s.id; playing = true
+           prefs.edit().putString("last_id", s.id).apply()
+          }
+         }
+         .padding(14.dp)
+       ) {
+        Row(verticalAlignment = Alignment.CenterVertically,
+         horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+         if (s.logo.startsWith("https://")) {
+          AsyncImage(model = s.logo, contentDescription = "โลโก้ " + s.name,
+           modifier = Modifier.size(56.dp), contentScale = ContentScale.Fit)
+         } else {
+          Text("♫", color = Color.White, style = MaterialTheme.typography.headlineLarge)
+         }
+         Text(s.name, modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold,
+          maxLines = 2, minLines = 2, color = Color.White)
+         Text(if (s.id in favorites) "★" else "☆", color = Color.White,
+          style = MaterialTheme.typography.titleLarge)
+        }
+        Spacer(Modifier.height(10.dp))
+        Text("OK ฟัง  •  OK ค้าง เพิ่ม/ลบโปรด",
+         color = Color(0xFFE2E9FF), style = MaterialTheme.typography.labelSmall)
+       }
       }
      }
      }
