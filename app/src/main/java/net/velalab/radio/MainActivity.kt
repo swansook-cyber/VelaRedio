@@ -34,6 +34,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.ui.focus.FocusDirection
+import kotlinx.coroutines.launch
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -70,7 +76,6 @@ class MainActivity : ComponentActivity() {
    var message by remember { mutableStateOf("กำลังโหลดสถานี") }
    var query by remember { mutableStateOf("") }
    var favorites by remember { mutableStateOf(prefs.getStringSet("favorites", emptySet())?.toSet() ?: emptySet()) }
-   var favOnly by remember { mutableStateOf(false) }
    var refresh by remember { mutableIntStateOf(0) }
    var nowPlaying by remember { mutableStateOf("ยังไม่ได้เลือกสถานี") }
    var playing by remember { mutableStateOf(false) }
@@ -80,6 +85,8 @@ class MainActivity : ComponentActivity() {
    val tv = LocalConfiguration.current.screenWidthDp >= 700
    val focusManager = LocalFocusManager.current
    val wide = LocalConfiguration.current.screenWidthDp >= 700
+   val gridState = rememberLazyGridState()
+   val scope = rememberCoroutineScope()
    LaunchedEffect(refresh) {
     try {
      stations = withContext(Dispatchers.IO) { loadStations() }
@@ -103,8 +110,7 @@ class MainActivity : ComponentActivity() {
      }
      if (message.isNotBlank()) Text(message, color = Color(0xFFA7B8D2), style = MaterialTheme.typography.bodySmall)
      Spacer(Modifier.height(4.dp))
-     val categories = listOf("ทั้งหมด", "รายการโปรด", "ล่าสุด") +
-      stations.map { stationCategory(it.tags) }.distinct().sorted()
+     val categories = listOf("ทั้งหมด", "รายการโปรด", "ล่าสุด", "ข่าว / พูดคุย", "เพลง", "ไม่ระบุประเภท")
      val filtered = stations.filter {
       it.name.contains(query, true) &&
        (category != "รายการโปรด" || it.id in favorites) &&
@@ -113,12 +119,12 @@ class MainActivity : ComponentActivity() {
      }
      Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
      if (tv) {
-      Column(Modifier.width(184.dp).fillMaxHeight().background(Color(0xFF111F35), RoundedCornerShape(18.dp)).padding(12.dp)) {
+      Column(Modifier.width(174.dp).fillMaxHeight().background(Color(0xFF111F35), RoundedCornerShape(18.dp)).padding(10.dp)) {
        Text("สถานี", color = Color.White, fontWeight = FontWeight.Bold)
-       Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+       Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
         categories.forEach { entry ->
-         FocusButton(entry, { category = entry })
+         FocusButton(entry, { category = entry; scope.launch { gridState.scrollToItem(0) } },
+          compact = true, selected = category == entry)
         }
        }
        Text("VelaLab • Radio", color = Color(0xFF91B6FF), style = MaterialTheme.typography.labelSmall)
@@ -127,6 +133,7 @@ class MainActivity : ComponentActivity() {
      LazyVerticalGrid(
       columns = GridCells.Fixed(if (wide) 3 else 1),
       modifier = Modifier.weight(1f),
+      state = gridState,
       horizontalArrangement = Arrangement.spacedBy(12.dp),
       verticalArrangement = Arrangement.spacedBy(12.dp)
      ) {
@@ -171,7 +178,7 @@ class MainActivity : ComponentActivity() {
            prefs.edit().putString("last_id", s.id).apply()
           }
          }
-         .height(if (wide) 116.dp else 128.dp)
+         .height(if (wide) 112.dp else 128.dp)
          .padding(12.dp)
        ) {
         Row(verticalAlignment = Alignment.CenterVertically,
@@ -187,15 +194,14 @@ class MainActivity : ComponentActivity() {
          Text(if (s.id in favorites) "★" else "☆", color = Color.White,
           style = MaterialTheme.typography.titleLarge)
         }
-        Spacer(Modifier.height(10.dp))
-        Text("OK ฟัง  •  OK ค้าง เพิ่ม/ลบโปรด",
-         color = Color(0xFFE2E9FF), style = MaterialTheme.typography.labelSmall)
+
        }
       }
      }
      }
      Spacer(Modifier.height(6.dp))
-     Row(Modifier.fillMaxWidth().height(64.dp).background(Color(0xFF182438), RoundedCornerShape(16.dp)).padding(horizontal = 12.dp, vertical = 6.dp),
+     Text("OK ฟัง  •  OK ค้าง เพิ่ม/ลบรายการโปรด", color = Color(0xFFB7C9EA), style = MaterialTheme.typography.labelSmall)
+     Row(Modifier.fillMaxWidth().height(54.dp).background(Color(0xFF182438), RoundedCornerShape(16.dp)).padding(horizontal = 12.dp, vertical = 6.dp),
       verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(12.dp)) {
       Column(Modifier.weight(1f)) {
@@ -204,7 +210,7 @@ class MainActivity : ComponentActivity() {
       }
       FocusButton(if (playing) "หยุด" else "เล่น", {
        controller?.let { if (it.isPlaying) { it.pause(); playing = false } else { it.play(); playing = true } }
-      }, enabled = ready.value)
+      }, enabled = ready.value && selectedId.isNotBlank())
      }
     }
    }
@@ -234,32 +240,34 @@ private fun loadStations(): List<Station> {
 }
 
 @Composable
-private fun FocusButton(label: String, onClick: () -> Unit, enabled: Boolean = true) {
+private fun FocusButton(
+ label: String, onClick: () -> Unit, enabled: Boolean = true,
+ compact: Boolean = false, selected: Boolean = false
+) {
  var focused by remember { mutableStateOf(false) }
  Button(
   onClick = onClick,
   enabled = enabled,
-  modifier = Modifier.onFocusChanged { focused = it.isFocused }
-   .border(if (focused) 3.dp else 0.dp, Color.White, RoundedCornerShape(24.dp)),
-  colors = ButtonDefaults.buttonColors(containerColor = if (focused) Color(0xFF487DE8) else Color(0xFF3F6BD6), contentColor = Color.White)
- ) { Text(label) }
+  contentPadding = if (compact) PaddingValues(horizontal = 10.dp, vertical = 2.dp)
+   else ButtonDefaults.ContentPadding,
+  modifier = Modifier
+   .then(if (compact) Modifier.fillMaxWidth().height(42.dp) else Modifier.heightIn(min = 44.dp))
+   .onFocusChanged { focused = it.isFocused }
+   .border(if (focused) 2.dp else 0.dp, Color.White, RoundedCornerShape(24.dp)),
+  shape = RoundedCornerShape(24.dp),
+  colors = ButtonDefaults.buttonColors(
+   containerColor = if (focused) Color(0xFF487DE8)
+    else if (selected) Color(0xFF2455B5) else Color(0xFF264A92),
+   contentColor = Color.White)
+ ) {
+  Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis,
+   style = if (compact) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge)
+ }
 }
 
 private fun stationCategory(rawTags: String): String {
  val tags = rawTags.lowercase().split(",").map { it.trim() }.filter { it.isNotBlank() }
  if (tags.isEmpty()) return "ไม่ระบุประเภท"
- val rules = listOf(
-  "ข่าว / พูดคุย" to listOf("news", "talk", "ข่าว", "พูดคุย"),
-  "ลูกทุ่ง" to listOf("luk thung", "lukthung", "ลูกทุ่ง"),
-  "เพลงไทย" to listOf("thai music", "thai pop", "เพลงไทย", "thaipop"),
-  "ป๊อป" to listOf("pop", "top 40"),
-  "ร็อก" to listOf("rock", "alternative"),
-  "แจ๊ส / บลูส์" to listOf("jazz", "blues"),
-  "คลาสสิก" to listOf("classical", "classic music"),
-  "แดนซ์ / EDM" to listOf("dance", "edm", "electronic"),
-  "สากล / รวมเพลง" to listOf("hits", "music", "international")
- )
- return rules.firstOrNull { (_, keywords) ->
-  tags.any { tag -> keywords.any { keyword -> tag == keyword || tag.contains(keyword) } }
- }?.first ?: "ไม่ระบุประเภท"
+ if (tags.any { it.contains("news") || it.contains("talk") || it.contains("ข่าว") }) return "ข่าว / พูดคุย"
+ return "เพลง"
 }
