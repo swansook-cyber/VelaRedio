@@ -1,6 +1,21 @@
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.android"); id("org.jetbrains.kotlin.plugin.compose") }
 android { namespace = "net.velalab.radio"; compileSdk = 35
  defaultConfig { applicationId = "net.velalab.radio"; minSdk = 26; targetSdk = 35; versionCode = 10; versionName = "1.0.0" }
+ signingConfigs {
+  create("velaRelease") {
+   val keyFile = System.getenv("VELA_RELEASE_KEYSTORE_FILE")
+   if (!keyFile.isNullOrBlank()) storeFile = file(keyFile)
+   storePassword = System.getenv("VELA_RELEASE_STORE_PASSWORD")
+   keyAlias = System.getenv("VELA_RELEASE_KEY_ALIAS") ?: "vela-store"
+   keyPassword = System.getenv("VELA_RELEASE_KEY_PASSWORD")
+  }
+ }
+ buildTypes {
+  getByName("release") {
+   signingConfig = signingConfigs.getByName("velaRelease")
+   isMinifyEnabled = false
+  }
+ }
  buildFeatures { compose = true }
  compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
  kotlinOptions { jvmTarget = "17" }
