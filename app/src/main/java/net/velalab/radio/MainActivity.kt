@@ -195,6 +195,6 @@ private fun FocusButton(label: String, onClick: () -> Unit, enabled: Boolean = t
   enabled = enabled,
   modifier = Modifier.onFocusChanged { focused = it.isFocused }
    .border(if (focused) 3.dp else 0.dp, Color.White, RoundedCornerShape(24.dp)),
-  colors = ButtonDefaults.buttonColors(containerColor = if (focused) Color(0xFF487DE8) else Color(0xFF3F6BD6), contentColor = Color.White))
+  colors = ButtonDefaults.buttonColors(containerColor = if (focused) Color(0xFF487DE8) else Color(0xFF3F6BD6), contentColor = Color.White)
  ) { Text(label) }
 }
