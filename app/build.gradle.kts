@@ -1,6 +1,6 @@
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.android"); id("org.jetbrains.kotlin.plugin.compose") }
 android { namespace = "net.velalab.radio"; compileSdk = 35
- defaultConfig { applicationId = "net.velalab.radio"; minSdk = 26; targetSdk = 35; versionCode = 13; versionName = "1.2.1" }
+ defaultConfig { applicationId = "net.velalab.radio"; minSdk = 26; targetSdk = 35; versionCode = 14; versionName = "1.3.0" }
  signingConfigs {
   create("velaRelease") {
    val keyFile = System.getenv("VELA_RELEASE_KEYSTORE_FILE")
