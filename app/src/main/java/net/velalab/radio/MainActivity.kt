@@ -20,7 +20,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.Image
 import androidx.compose.ui.layout.ContentScale
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusProperties
@@ -136,7 +137,7 @@ class MainActivity : ComponentActivity() {
         }
        }
        Text("Vela Radio • By VelaLab", color = Color(0xFF8DA4C7), style = MaterialTheme.typography.labelSmall)
-       Text("V1.3.0", color = Color(0xFF68738D), style = MaterialTheme.typography.labelSmall)
+       Text("V1.3.1", color = Color(0xFF68738D), style = MaterialTheme.typography.labelSmall)
       }
      }
      LazyVerticalGrid(
@@ -192,11 +193,21 @@ class MainActivity : ComponentActivity() {
        ) {
         Row(verticalAlignment = Alignment.CenterVertically,
          horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-         if (s.logo.startsWith("https://")) {
-          AsyncImage(model = s.logo, contentDescription = "โลโก้ " + s.name,
-           modifier = Modifier.size(48.dp), contentScale = ContentScale.Fit)
+         val logoSize = if (carLandscape) 42.dp else 48.dp
+         if (s.logo.startsWith("https://", ignoreCase = true)) {
+          SubcomposeAsyncImage(
+           model = s.logo,
+           contentDescription = "โลโก้ " + s.name,
+           modifier = Modifier.size(logoSize),
+           contentScale = ContentScale.Fit
+          ) {
+           when (painter.state) {
+            is coil.compose.AsyncImagePainter.State.Success -> SubcomposeAsyncImageContent()
+            else -> RadioPlaceholder(Modifier.fillMaxSize())
+           }
+          }
          } else {
-          RadioPlaceholder(Modifier.size(if (carLandscape) 42.dp else 48.dp))
+          RadioPlaceholder(Modifier.size(logoSize))
          }
          Text(s.name, modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold,
           maxLines = 2, minLines = 2, color = Color.White, style = MaterialTheme.typography.titleSmall)
