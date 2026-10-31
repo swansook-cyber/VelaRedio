@@ -93,7 +93,7 @@ class MainActivity : ComponentActivity() {
    val screenWidth = LocalConfiguration.current.screenWidthDp
    val wide = screenWidth >= 700
    val carLandscape = wide && !tv
-   val sidebarWidth = if (carLandscape) 190.dp else 174.dp
+   val sidebarWidth = if (carLandscape) 204.dp else 174.dp
    val gridState = rememberLazyGridState()
    val scope = rememberCoroutineScope()
    LaunchedEffect(refresh) {
@@ -130,14 +130,14 @@ class MainActivity : ComponentActivity() {
      if (wide) {
       Column(Modifier.width(sidebarWidth).fillMaxHeight().background(Color(0xFF111F35), RoundedCornerShape(18.dp)).padding(10.dp)) {
        Text("สถานี", color = Color.White, fontWeight = FontWeight.Bold)
-       Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(if (carLandscape) 12.dp else 10.dp)) {
+       Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(if (carLandscape) 9.dp else 10.dp)) {
         categories.forEach { entry ->
          FocusButton(entry, { category = entry; scope.launch { gridState.scrollToItem(0) } },
           compact = true, selected = category == entry, touchMode = carLandscape)
         }
        }
        Text("Vela Radio • By VelaLab", color = Color(0xFF8DA4C7), style = MaterialTheme.typography.labelSmall)
-       Text("V1.3.2", color = Color(0xFF68738D), style = MaterialTheme.typography.labelSmall)
+       Text("V1.3.3", color = Color(0xFF68738D), style = MaterialTheme.typography.labelSmall)
       }
      }
      LazyVerticalGrid(
@@ -188,12 +188,12 @@ class MainActivity : ComponentActivity() {
            prefs.edit().putString("last_id", s.id).apply()
           }
          }
-         .height(if (wide) 112.dp else 128.dp)
+         .height(if (carLandscape) 112.dp else if (wide) 112.dp else 128.dp)
          .padding(12.dp)
        ) {
         Row(verticalAlignment = Alignment.CenterVertically,
          horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-         val logoSize = if (carLandscape) 42.dp else 48.dp
+         val logoSize = if (carLandscape) 54.dp else 48.dp
          if (s.logo.startsWith("https://", ignoreCase = true)) {
           SubcomposeAsyncImage(
            model = s.logo,
@@ -210,7 +210,7 @@ class MainActivity : ComponentActivity() {
           RadioPlaceholder(Modifier.size(logoSize))
          }
          Text(s.name, modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold,
-          maxLines = 2, minLines = 2, color = Color.White, style = if (carLandscape) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleSmall)
+          maxLines = 2, minLines = 2, color = Color.White, style = if (carLandscape) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleSmall)
          Text(if (s.id in favorites) "★" else "☆", color = Color.White,
           style = MaterialTheme.typography.titleLarge,
           modifier = if (carLandscape) Modifier.clickable { toggleFavorite() }.padding(4.dp) else Modifier)
@@ -227,7 +227,7 @@ class MainActivity : ComponentActivity() {
       horizontalArrangement = Arrangement.spacedBy(12.dp)) {
       Column(Modifier.weight(1f)) {
        Text("NOW PLAYING", color = Color(0xFF91B6FF), style = MaterialTheme.typography.labelMedium)
-       Text(nowPlaying, maxLines = 1, fontWeight = FontWeight.Bold, color = Color.White)
+       Text(nowPlaying, maxLines = 1, fontWeight = FontWeight.Bold, color = Color.White, style = if (carLandscape) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge)
       }
       FocusButton(if (playing) "หยุด" else "เล่น", {
        controller?.let { if (it.isPlaying) { it.pause(); playing = false } else { it.play(); playing = true } }
@@ -282,7 +282,7 @@ private fun FocusButton(
    contentColor = Color.White)
  ) {
   Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis,
-   style = if (compact && touchMode) MaterialTheme.typography.titleMedium else if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.labelLarge)
+   style = if (compact && touchMode) MaterialTheme.typography.titleLarge else if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.labelLarge)
  }
 }
 
