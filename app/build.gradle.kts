@@ -1,6 +1,6 @@
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.android"); id("org.jetbrains.kotlin.plugin.compose") }
 android { namespace = "net.velalab.radio"; compileSdk = 35
- defaultConfig { applicationId = "net.velalab.radio"; minSdk = 26; targetSdk = 35; versionCode = 8; versionName = "0.8.0" }
+ defaultConfig { applicationId = "net.velalab.radio"; minSdk = 26; targetSdk = 35; versionCode = 10; versionName = "1.0.0" }
  buildFeatures { compose = true }
  compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
  kotlinOptions { jvmTarget = "17" }
