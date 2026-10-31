@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -76,7 +77,7 @@ class MainActivity : ComponentActivity() {
      Text("สถานีวิทยุ", style = MaterialTheme.typography.titleLarge)
      Spacer(Modifier.height(8.dp))
      val filtered = stations.filter { it.name.contains(query, true) && (!favOnly || it.id in favorites) }
-     androidx.compose.foundation.lazy.LazyVerticalGrid(
+     LazyVerticalGrid(
       columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(if (wide) 3 else 1),
       modifier = Modifier.weight(1f),
       horizontalArrangement = Arrangement.spacedBy(12.dp),
