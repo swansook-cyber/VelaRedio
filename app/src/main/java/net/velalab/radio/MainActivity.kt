@@ -50,7 +50,7 @@ import org.json.JSONArray
 import java.net.HttpURLConnection
 import java.net.URL
 
-private data class Station(val id: String, val name: String, val stream: String, val logo: String)
+private data class Station(val id: String, val name: String, val stream: String, val logo: String, val tags: String)
 class MainActivity : ComponentActivity() {
  private var controllerFuture: ListenableFuture<MediaController>? = null
  private var controller: MediaController? = null
@@ -83,7 +83,7 @@ class MainActivity : ComponentActivity() {
    LaunchedEffect(refresh) {
     try {
      stations = withContext(Dispatchers.IO) { loadStations() }
-     message = "พบ ${stations.size} สถานีประเทศไทย (ยังไม่คัดเฉพาะเพลงไทย)"
+     message = ""
     } catch (e: Exception) { message = "โหลดไม่สำเร็จ: ${e.message}" }
    }
    MaterialTheme(colorScheme = darkColorScheme(primary = Color(0xFF91B6FF), background = Color(0xFF0B1220), surface = Color(0xFF182438))) {
@@ -91,7 +91,6 @@ class MainActivity : ComponentActivity() {
      Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
       Text("◉ Vela Radio  •  LIVE", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.weight(1f))
       FocusButton("ค้นหา", { searchOpen = !searchOpen; if (!searchOpen) focusManager.clearFocus() })
-      FocusButton(if (favOnly) "★ โปรด" else "☆ โปรด", { favOnly = !favOnly })
       FocusButton("รีเฟรช", { refresh++ })
      }
      if (searchOpen) {
@@ -102,17 +101,26 @@ class MainActivity : ComponentActivity() {
         } else false
        }, singleLine = true)
      }
-     Text(message, color = Color(0xFFA7B8D2), style = MaterialTheme.typography.bodySmall)
-     Spacer(Modifier.height(8.dp))
-     val filtered = stations.filter { it.name.contains(query, true) && (!favOnly || it.id in favorites) && (category != "ล่าสุด" || it.id == selectedId) }
+     if (message.isNotBlank()) Text(message, color = Color(0xFFA7B8D2), style = MaterialTheme.typography.bodySmall)
+     Spacer(Modifier.height(4.dp))
+     val categories = listOf("ทั้งหมด", "รายการโปรด", "ล่าสุด") +
+      stations.map { stationCategory(it.tags) }.distinct().sorted()
+     val filtered = stations.filter {
+      it.name.contains(query, true) &&
+       (category != "รายการโปรด" || it.id in favorites) &&
+       (category != "ล่าสุด" || it.id == selectedId) &&
+       (category in listOf("ทั้งหมด", "รายการโปรด", "ล่าสุด") || stationCategory(it.tags) == category)
+     }
      Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
      if (tv) {
-      Column(Modifier.width(170.dp).fillMaxHeight().background(Color(0xFF111F35), RoundedCornerShape(18.dp)).padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+      Column(Modifier.width(184.dp).fillMaxHeight().background(Color(0xFF111F35), RoundedCornerShape(18.dp)).padding(12.dp)) {
        Text("สถานี", color = Color.White, fontWeight = FontWeight.Bold)
-       listOf("ทั้งหมด", "รายการโปรด", "ล่าสุด").forEach { entry ->
-        FocusButton(entry, { category = entry; favOnly = entry == "รายการโปรด" })
+       Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        categories.forEach { entry ->
+         FocusButton(entry, { category = entry })
+        }
        }
-       Spacer(Modifier.weight(1f))
        Text("VelaLab • Radio", color = Color(0xFF91B6FF), style = MaterialTheme.typography.labelSmall)
       }
      }
@@ -163,7 +171,8 @@ class MainActivity : ComponentActivity() {
            prefs.edit().putString("last_id", s.id).apply()
           }
          }
-         .padding(14.dp)
+         .height(if (wide) 116.dp else 128.dp)
+         .padding(12.dp)
        ) {
         Row(verticalAlignment = Alignment.CenterVertically,
          horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -185,8 +194,8 @@ class MainActivity : ComponentActivity() {
       }
      }
      }
-     Spacer(Modifier.height(12.dp))
-     Row(Modifier.fillMaxWidth().background(Color(0xFF182438), RoundedCornerShape(16.dp)).padding(14.dp),
+     Spacer(Modifier.height(6.dp))
+     Row(Modifier.fillMaxWidth().height(64.dp).background(Color(0xFF182438), RoundedCornerShape(16.dp)).padding(horizontal = 12.dp, vertical = 6.dp),
       verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(12.dp)) {
       Column(Modifier.weight(1f)) {
@@ -219,7 +228,7 @@ private fun loadStations(): List<Station> {
    val o = arr.getJSONObject(i)
    val stream = o.optString("url_resolved").ifBlank { o.optString("url") }
    val id = o.optString("stationuuid"); val name = o.optString("name")
-   if (id.isBlank() || name.isBlank() || !stream.startsWith("https://")) null else Station(id, name, stream, o.optString("favicon"))
+   if (id.isBlank() || name.isBlank() || !stream.startsWith("https://")) null else Station(id, name, stream, o.optString("favicon"), o.optString("tags"))
   }.distinctBy { it.id }
  } finally { c.disconnect() }
 }
@@ -234,4 +243,23 @@ private fun FocusButton(label: String, onClick: () -> Unit, enabled: Boolean = t
    .border(if (focused) 3.dp else 0.dp, Color.White, RoundedCornerShape(24.dp)),
   colors = ButtonDefaults.buttonColors(containerColor = if (focused) Color(0xFF487DE8) else Color(0xFF3F6BD6), contentColor = Color.White)
  ) { Text(label) }
+}
+
+private fun stationCategory(rawTags: String): String {
+ val tags = rawTags.lowercase().split(",").map { it.trim() }.filter { it.isNotBlank() }
+ if (tags.isEmpty()) return "ไม่ระบุประเภท"
+ val rules = listOf(
+  "ข่าว / พูดคุย" to listOf("news", "talk", "ข่าว", "พูดคุย"),
+  "ลูกทุ่ง" to listOf("luk thung", "lukthung", "ลูกทุ่ง"),
+  "เพลงไทย" to listOf("thai music", "thai pop", "เพลงไทย", "thaipop"),
+  "ป๊อป" to listOf("pop", "top 40"),
+  "ร็อก" to listOf("rock", "alternative"),
+  "แจ๊ส / บลูส์" to listOf("jazz", "blues"),
+  "คลาสสิก" to listOf("classical", "classic music"),
+  "แดนซ์ / EDM" to listOf("dance", "edm", "electronic"),
+  "สากล / รวมเพลง" to listOf("hits", "music", "international")
+ )
+ return rules.firstOrNull { (_, keywords) ->
+  tags.any { tag -> keywords.any { keyword -> tag == keyword || tag.contains(keyword) } }
+ }?.first ?: "ไม่ระบุประเภท"
 }
