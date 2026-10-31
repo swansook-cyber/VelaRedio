@@ -15,7 +15,10 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
+      - name: Verify preinstalled Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          test -d "$ANDROID_HOME/platforms/android-35" || (echo 'Android SDK platform 35 unavailable' && exit 1)
       - uses: gradle/actions/setup-gradle@v4
       - name: Compile debug APK
         run: gradle --no-daemon :app:assembleDebug
