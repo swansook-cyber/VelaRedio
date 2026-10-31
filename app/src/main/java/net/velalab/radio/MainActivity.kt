@@ -2,6 +2,11 @@ package net.velalab.radio
 
 import android.content.ComponentName
 import android.os.Bundle
+import android.content.pm.PackageManager
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.unit.sp
 import android.view.KeyEvent as AndroidKeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -82,9 +87,12 @@ class MainActivity : ComponentActivity() {
    var searchOpen by remember { mutableStateOf(false) }
    var selectedId by remember { mutableStateOf(prefs.getString("last_id", "") ?: "") }
    var category by remember { mutableStateOf("ทั้งหมด") }
-   val tv = LocalConfiguration.current.screenWidthDp >= 700
+   val tv = packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK) || packageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
    val focusManager = LocalFocusManager.current
-   val wide = LocalConfiguration.current.screenWidthDp >= 700
+   val screenWidth = LocalConfiguration.current.screenWidthDp
+   val wide = screenWidth >= 700
+   val carLandscape = wide && !tv
+   val sidebarWidth = if (carLandscape) 190.dp else 174.dp
    val gridState = rememberLazyGridState()
    val scope = rememberCoroutineScope()
    LaunchedEffect(refresh) {
@@ -118,20 +126,21 @@ class MainActivity : ComponentActivity() {
        (category in listOf("ทั้งหมด", "รายการโปรด", "ล่าสุด") || stationCategory(it.tags) == category)
      }
      Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-     if (tv) {
-      Column(Modifier.width(174.dp).fillMaxHeight().background(Color(0xFF111F35), RoundedCornerShape(18.dp)).padding(10.dp)) {
+     if (wide) {
+      Column(Modifier.width(sidebarWidth).fillMaxHeight().background(Color(0xFF111F35), RoundedCornerShape(18.dp)).padding(10.dp)) {
        Text("สถานี", color = Color.White, fontWeight = FontWeight.Bold)
-       Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+       Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(if (carLandscape) 12.dp else 10.dp)) {
         categories.forEach { entry ->
          FocusButton(entry, { category = entry; scope.launch { gridState.scrollToItem(0) } },
-          compact = true, selected = category == entry)
+          compact = true, selected = category == entry, touchMode = carLandscape)
         }
        }
-       Text("by VelaLab", color = Color(0xFF8DA4C7), style = MaterialTheme.typography.labelSmall)
+       Text("Vela Radio • By VelaLab", color = Color(0xFF8DA4C7), style = MaterialTheme.typography.labelSmall)
+       Text("V1.3.0", color = Color(0xFF68738D), style = MaterialTheme.typography.labelSmall)
       }
      }
      LazyVerticalGrid(
-      columns = GridCells.Fixed(if (wide) 3 else 1),
+      columns = GridCells.Fixed(if (wide) 3 else if (screenWidth >= 480) 2 else 1),
       modifier = Modifier.weight(1f),
       state = gridState,
       horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -187,12 +196,13 @@ class MainActivity : ComponentActivity() {
           AsyncImage(model = s.logo, contentDescription = "โลโก้ " + s.name,
            modifier = Modifier.size(48.dp), contentScale = ContentScale.Fit)
          } else {
-          Text("♫", color = Color.White, style = MaterialTheme.typography.headlineLarge)
+          RadioPlaceholder(Modifier.size(if (carLandscape) 42.dp else 48.dp))
          }
          Text(s.name, modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold,
           maxLines = 2, minLines = 2, color = Color.White, style = MaterialTheme.typography.titleSmall)
          Text(if (s.id in favorites) "★" else "☆", color = Color.White,
-          style = MaterialTheme.typography.titleLarge)
+          style = MaterialTheme.typography.titleLarge,
+          modifier = if (carLandscape) Modifier.clickable { toggleFavorite() }.padding(4.dp) else Modifier)
         }
 
        }
@@ -242,7 +252,7 @@ private fun loadStations(): List<Station> {
 @Composable
 private fun FocusButton(
  label: String, onClick: () -> Unit, enabled: Boolean = true,
- compact: Boolean = false, selected: Boolean = false
+ compact: Boolean = false, selected: Boolean = false, touchMode: Boolean = false
 ) {
  var focused by remember { mutableStateOf(false) }
  Button(
@@ -251,7 +261,7 @@ private fun FocusButton(
   contentPadding = if (compact) PaddingValues(horizontal = 10.dp, vertical = 2.dp)
    else ButtonDefaults.ContentPadding,
   modifier = Modifier
-   .then(if (compact) Modifier.fillMaxWidth().height(40.dp) else Modifier.heightIn(min = 44.dp))
+   .then(if (compact) Modifier.fillMaxWidth().height(if (touchMode) 46.dp else 40.dp) else Modifier.heightIn(min = 44.dp))
    .onFocusChanged { focused = it.isFocused }
    .border(if (focused) 2.dp else 0.dp, Color.White, RoundedCornerShape(24.dp)),
   shape = RoundedCornerShape(24.dp),
@@ -261,7 +271,7 @@ private fun FocusButton(
    contentColor = Color.White)
  ) {
   Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis,
-   style = if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.labelLarge)
+   style = if (compact && touchMode) MaterialTheme.typography.titleMedium else if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.labelLarge)
  }
 }
 
@@ -270,4 +280,16 @@ private fun stationCategory(rawTags: String): String {
  if (tags.isEmpty()) return "ไม่ระบุประเภท"
  if (tags.any { it.contains("news") || it.contains("talk") || it.contains("ข่าว") }) return "ข่าว / พูดคุย"
  return "เพลง"
+}
+
+@Composable
+private fun RadioPlaceholder(modifier: Modifier = Modifier) {
+ Canvas(modifier) {
+  val w = size.width; val h = size.height
+  val ink = Color.White
+  drawLine(ink, Offset(w*.22f,h*.32f), Offset(w*.67f,h*.12f), strokeWidth = w*.055f)
+  drawRoundRect(ink, topLeft = Offset(w*.1f,h*.3f), size = androidx.compose.ui.geometry.Size(w*.8f,h*.58f), cornerRadius = androidx.compose.ui.geometry.CornerRadius(w*.11f), style = Stroke(w*.055f))
+  drawCircle(ink, radius = w*.13f, center = Offset(w*.32f,h*.59f), style = Stroke(w*.045f))
+  for (i in 0..3) drawLine(ink, Offset(w*.55f,h*(.47f+i*.085f)), Offset(w*.78f,h*(.47f+i*.085f)), strokeWidth = w*.038f)
+ }
 }
