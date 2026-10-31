@@ -3,7 +3,6 @@ package net.velalab.radio
 import android.content.ComponentName
 import android.os.Bundle
 import android.view.KeyEvent as AndroidKeyEvent
-import androidx.compose.ui.input.key.nativeKeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
