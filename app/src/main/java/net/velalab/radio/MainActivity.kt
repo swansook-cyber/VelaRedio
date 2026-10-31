@@ -86,7 +86,7 @@ class MainActivity : ComponentActivity() {
     } catch (e: Exception) { message = "โหลดไม่สำเร็จ: ${e.message}" }
    }
    MaterialTheme(colorScheme = darkColorScheme(primary = Color(0xFF91B6FF), background = Color(0xFF0B1220), surface = Color(0xFF182438))) {
-    Column(Modifier.fillMaxSize().background(Color(0xFF0B1220)).padding(if (wide) 28.dp else 16.dp)) {
+    Column(Modifier.fillMaxSize().background(Color(0xFF101C34)).padding(if (wide) 28.dp else 16.dp)) {
      Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
       Text("◉ Vela Radio  •  LIVE", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.weight(1f))
       FocusButton("ค้นหา", { searchOpen = !searchOpen; if (!searchOpen) focusManager.clearFocus() })
@@ -127,7 +127,7 @@ class MainActivity : ComponentActivity() {
        Column(Modifier
         .onFocusChanged { focused = it.isFocused || it.hasFocus }
         .border(if (focused) 3.dp else 1.dp, if (focused) Color(0xFF91B6FF) else Color(0xFF33465F), RoundedCornerShape(16.dp))
-        .background(if (focused) Color(0xFF263E60) else Color(0xFF182438), RoundedCornerShape(16.dp))
+        .background(if (focused) Color(0xFF3B599E) else listOf(Color(0xFF164F80), Color(0xFF673C93), Color(0xFF9B3769), Color(0xFF23766F), Color(0xFF985B27))[i % 5], RoundedCornerShape(16.dp))
         .clickable(enabled = ready.value) { controller?.let { p -> p.setMediaItem(MediaItem.Builder().setMediaId(s.id).setUri(s.stream).setMediaMetadata(MediaMetadata.Builder().setTitle(s.name).build()).build()); p.prepare(); p.play(); nowPlaying = s.name; selectedId = s.id; playing = true; prefs.edit().putString("last_id", s.id).apply() } }
         .padding(14.dp)) {
         Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -139,22 +139,12 @@ class MainActivity : ComponentActivity() {
          Text(s.name, fontWeight = FontWeight.SemiBold, maxLines = 2, minLines = 2, color = Color.White)
         }
         Spacer(Modifier.height(10.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-         FocusButton("ฟัง", {
-          controller?.let {
-           val item = MediaItem.Builder().setMediaId(s.id).setUri(s.stream)
-            .setMediaMetadata(MediaMetadata.Builder().setTitle(s.name).build()).build()
-           it.setMediaItem(item); it.prepare(); it.play()
-           nowPlaying = s.name; selectedId = s.id; playing = true
-           prefs.edit().putString("last_id", s.id).apply()
-          }
-         }, enabled = ready.value)
-         FocusButton(if (s.id in favorites) "★" else "☆", {
-          favorites = favorites.toMutableSet().apply { if (!add(s.id)) remove(s.id) }.toSet()
-          prefs.edit().putStringSet("favorites", favorites).apply()
-         })
-        }
+        Text("OK เพื่อฟัง", color = Color(0xFFBBD5FF), style = MaterialTheme.typography.labelSmall)
        }
+       FocusButton(if (s.id in favorites) "★ รายการโปรด" else "☆ เพิ่มรายการโปรด", {
+        favorites = favorites.toMutableSet().apply { if (!add(s.id)) remove(s.id) }.toSet()
+        prefs.edit().putStringSet("favorites", favorites).apply()
+       })
       }
      }
      }
@@ -205,6 +195,6 @@ private fun FocusButton(label: String, onClick: () -> Unit, enabled: Boolean = t
   enabled = enabled,
   modifier = Modifier.onFocusChanged { focused = it.isFocused }
    .border(if (focused) 3.dp else 0.dp, Color.White, RoundedCornerShape(24.dp)),
-  colors = ButtonDefaults.buttonColors(containerColor = if (focused) Color(0xFF487DE8) else Color(0xFF355AAB))
+  colors = ButtonDefaults.buttonColors(containerColor = if (focused) Color(0xFF487DE8) else Color(0xFF3F6BD6), contentColor = Color.White))
  ) { Text(label) }
 }
