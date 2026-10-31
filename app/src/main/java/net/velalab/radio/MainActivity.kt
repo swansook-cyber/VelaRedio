@@ -137,7 +137,7 @@ class MainActivity : ComponentActivity() {
         }
        }
        Text("Vela Radio • By VelaLab", color = Color(0xFF8DA4C7), style = MaterialTheme.typography.labelSmall)
-       Text("V1.3.1", color = Color(0xFF68738D), style = MaterialTheme.typography.labelSmall)
+       Text("V1.3.2", color = Color(0xFF68738D), style = MaterialTheme.typography.labelSmall)
       }
      }
      LazyVerticalGrid(
@@ -210,7 +210,7 @@ class MainActivity : ComponentActivity() {
           RadioPlaceholder(Modifier.size(logoSize))
          }
          Text(s.name, modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold,
-          maxLines = 2, minLines = 2, color = Color.White, style = MaterialTheme.typography.titleSmall)
+          maxLines = 2, minLines = 2, color = Color.White, style = if (carLandscape) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleSmall)
          Text(if (s.id in favorites) "★" else "☆", color = Color.White,
           style = MaterialTheme.typography.titleLarge,
           modifier = if (carLandscape) Modifier.clickable { toggleFavorite() }.padding(4.dp) else Modifier)
@@ -221,7 +221,7 @@ class MainActivity : ComponentActivity() {
      }
      }
      Spacer(Modifier.height(6.dp))
-     Text("OK ฟัง  •  OK ค้าง เพิ่ม/ลบรายการโปรด", color = Color(0xFF8FA8D0), style = MaterialTheme.typography.labelSmall)
+     if (tv) Text("OK ฟัง  •  OK ค้าง เพิ่ม/ลบรายการโปรด", color = Color(0xFF8FA8D0), style = MaterialTheme.typography.labelSmall)
      Row(Modifier.fillMaxWidth().height(54.dp).background(Color(0xFF182438), RoundedCornerShape(16.dp)).padding(horizontal = 12.dp, vertical = 6.dp),
       verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(12.dp)) {
