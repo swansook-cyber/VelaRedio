@@ -121,13 +121,13 @@ class MainActivity : ComponentActivity() {
      if (tv) {
       Column(Modifier.width(174.dp).fillMaxHeight().background(Color(0xFF111F35), RoundedCornerShape(18.dp)).padding(10.dp)) {
        Text("สถานี", color = Color.White, fontWeight = FontWeight.Bold)
-       Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+       Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         categories.forEach { entry ->
          FocusButton(entry, { category = entry; scope.launch { gridState.scrollToItem(0) } },
           compact = true, selected = category == entry)
         }
        }
-       Text("VelaLab • Radio", color = Color(0xFF91B6FF), style = MaterialTheme.typography.labelSmall)
+       Text("by VelaLab", color = Color(0xFF8DA4C7), style = MaterialTheme.typography.labelSmall)
       }
      }
      LazyVerticalGrid(
@@ -185,12 +185,12 @@ class MainActivity : ComponentActivity() {
          horizontalArrangement = Arrangement.spacedBy(12.dp)) {
          if (s.logo.startsWith("https://")) {
           AsyncImage(model = s.logo, contentDescription = "โลโก้ " + s.name,
-           modifier = Modifier.size(56.dp), contentScale = ContentScale.Fit)
+           modifier = Modifier.size(48.dp), contentScale = ContentScale.Fit)
          } else {
           Text("♫", color = Color.White, style = MaterialTheme.typography.headlineLarge)
          }
          Text(s.name, modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold,
-          maxLines = 2, minLines = 2, color = Color.White)
+          maxLines = 2, minLines = 2, color = Color.White, style = MaterialTheme.typography.titleSmall)
          Text(if (s.id in favorites) "★" else "☆", color = Color.White,
           style = MaterialTheme.typography.titleLarge)
         }
@@ -200,7 +200,7 @@ class MainActivity : ComponentActivity() {
      }
      }
      Spacer(Modifier.height(6.dp))
-     Text("OK ฟัง  •  OK ค้าง เพิ่ม/ลบรายการโปรด", color = Color(0xFFB7C9EA), style = MaterialTheme.typography.labelSmall)
+     Text("OK ฟัง  •  OK ค้าง เพิ่ม/ลบรายการโปรด", color = Color(0xFF8FA8D0), style = MaterialTheme.typography.labelSmall)
      Row(Modifier.fillMaxWidth().height(54.dp).background(Color(0xFF182438), RoundedCornerShape(16.dp)).padding(horizontal = 12.dp, vertical = 6.dp),
       verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -251,7 +251,7 @@ private fun FocusButton(
   contentPadding = if (compact) PaddingValues(horizontal = 10.dp, vertical = 2.dp)
    else ButtonDefaults.ContentPadding,
   modifier = Modifier
-   .then(if (compact) Modifier.fillMaxWidth().height(42.dp) else Modifier.heightIn(min = 44.dp))
+   .then(if (compact) Modifier.fillMaxWidth().height(40.dp) else Modifier.heightIn(min = 44.dp))
    .onFocusChanged { focused = it.isFocused }
    .border(if (focused) 2.dp else 0.dp, Color.White, RoundedCornerShape(24.dp)),
   shape = RoundedCornerShape(24.dp),
@@ -261,7 +261,7 @@ private fun FocusButton(
    contentColor = Color.White)
  ) {
   Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis,
-   style = if (compact) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge)
+   style = if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.labelLarge)
  }
 }
 
