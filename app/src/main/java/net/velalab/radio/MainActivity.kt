@@ -7,6 +7,11 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.Image
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
@@ -69,6 +74,9 @@ class MainActivity : ComponentActivity() {
    var nowPlaying by remember { mutableStateOf("ยังไม่ได้เลือกสถานี") }
    var playing by remember { mutableStateOf(false) }
    var searchOpen by remember { mutableStateOf(false) }
+   var selectedId by remember { mutableStateOf(prefs.getString("last_id", "") ?: "") }
+   var category by remember { mutableStateOf("ทั้งหมด") }
+   val tv = LocalConfiguration.current.screenWidthDp >= 700
    val focusManager = LocalFocusManager.current
    val wide = LocalConfiguration.current.screenWidthDp >= 700
    LaunchedEffect(refresh) {
@@ -80,7 +88,7 @@ class MainActivity : ComponentActivity() {
    MaterialTheme(colorScheme = darkColorScheme(primary = Color(0xFF91B6FF), background = Color(0xFF0B1220), surface = Color(0xFF182438))) {
     Column(Modifier.fillMaxSize().background(Color(0xFF0B1220)).padding(if (wide) 28.dp else 16.dp)) {
      Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-      Text("◉ Vela Radio", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.weight(1f))
+      Text("◉ Vela Radio  •  LIVE", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.weight(1f))
       FocusButton("ค้นหา", { searchOpen = !searchOpen; if (!searchOpen) focusManager.clearFocus() })
       FocusButton(if (favOnly) "★ โปรด" else "☆ โปรด", { favOnly = !favOnly })
       FocusButton("รีเฟรช", { refresh++ })
@@ -95,9 +103,20 @@ class MainActivity : ComponentActivity() {
      }
      Text(message, color = Color(0xFFA7B8D2), style = MaterialTheme.typography.bodySmall)
      Spacer(Modifier.height(8.dp))
-     val filtered = stations.filter { it.name.contains(query, true) && (!favOnly || it.id in favorites) }
+     val filtered = stations.filter { it.name.contains(query, true) && (!favOnly || it.id in favorites) && (category != "ล่าสุด" || it.id == selectedId) }
+     Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+     if (tv) {
+      Column(Modifier.width(170.dp).fillMaxHeight().background(Color(0xFF111F35), RoundedCornerShape(18.dp)).padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+       Text("สถานี", color = Color.White, fontWeight = FontWeight.Bold)
+       listOf("ทั้งหมด", "รายการโปรด", "ล่าสุด").forEach { entry ->
+        FocusButton(entry, { category = entry; favOnly = entry == "รายการโปรด" })
+       }
+       Spacer(Modifier.weight(1f))
+       Text("VelaLab • Radio", color = Color(0xFF91B6FF), style = MaterialTheme.typography.labelSmall)
+      }
+     }
      LazyVerticalGrid(
-      columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(if (wide) 3 else 1),
+      columns = GridCells.Fixed(if (wide) 3 else 1),
       modifier = Modifier.weight(1f),
       horizontalArrangement = Arrangement.spacedBy(12.dp),
       verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -109,6 +128,7 @@ class MainActivity : ComponentActivity() {
         .onFocusChanged { focused = it.isFocused || it.hasFocus }
         .border(if (focused) 3.dp else 1.dp, if (focused) Color(0xFF91B6FF) else Color(0xFF33465F), RoundedCornerShape(16.dp))
         .background(if (focused) Color(0xFF263E60) else Color(0xFF182438), RoundedCornerShape(16.dp))
+        .clickable(enabled = ready.value) { controller?.let { p -> p.setMediaItem(MediaItem.Builder().setMediaId(s.id).setUri(s.stream).setMediaMetadata(MediaMetadata.Builder().setTitle(s.name).build()).build()); p.prepare(); p.play(); nowPlaying = s.name; selectedId = s.id; playing = true; prefs.edit().putString("last_id", s.id).apply() } }
         .padding(14.dp)) {
         Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
          if (s.logo.startsWith("https://")) {
@@ -125,7 +145,7 @@ class MainActivity : ComponentActivity() {
            val item = MediaItem.Builder().setMediaId(s.id).setUri(s.stream)
             .setMediaMetadata(MediaMetadata.Builder().setTitle(s.name).build()).build()
            it.setMediaItem(item); it.prepare(); it.play()
-           nowPlaying = s.name; playing = true
+           nowPlaying = s.name; selectedId = s.id; playing = true
            prefs.edit().putString("last_id", s.id).apply()
           }
          }, enabled = ready.value)
@@ -137,13 +157,14 @@ class MainActivity : ComponentActivity() {
        }
       }
      }
+     }
      Spacer(Modifier.height(12.dp))
      Row(Modifier.fillMaxWidth().background(Color(0xFF182438), RoundedCornerShape(16.dp)).padding(14.dp),
       verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(12.dp)) {
       Column(Modifier.weight(1f)) {
        Text("NOW PLAYING", color = Color(0xFF91B6FF), style = MaterialTheme.typography.labelMedium)
-       Text(nowPlaying, maxLines = 1, fontWeight = FontWeight.Bold)
+       Text(nowPlaying, maxLines = 1, fontWeight = FontWeight.Bold, color = Color.White)
       }
       FocusButton(if (playing) "หยุด" else "เล่น", {
        controller?.let { if (it.isPlaying) { it.pause(); playing = false } else { it.play(); playing = true } }
