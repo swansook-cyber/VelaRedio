@@ -5,8 +5,15 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.focusable
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -45,42 +52,75 @@ class MainActivity : ComponentActivity() {
    var favorites by remember { mutableStateOf(prefs.getStringSet("favorites", emptySet())?.toSet() ?: emptySet()) }
    var favOnly by remember { mutableStateOf(false) }
    var refresh by remember { mutableIntStateOf(0) }
+   var nowPlaying by remember { mutableStateOf("ยังไม่ได้เลือกสถานี") }
+   var playing by remember { mutableStateOf(false) }
+   val wide = LocalConfiguration.current.screenWidthDp >= 700
    LaunchedEffect(refresh) {
     try {
      stations = withContext(Dispatchers.IO) { loadStations() }
      message = "พบ ${stations.size} สถานีประเทศไทย (ยังไม่คัดเฉพาะเพลงไทย)"
     } catch (e: Exception) { message = "โหลดไม่สำเร็จ: ${e.message}" }
    }
-   MaterialTheme {
-    Column(Modifier.fillMaxSize().padding(16.dp)) {
-     Text("Vela Radio", style = MaterialTheme.typography.headlineMedium)
-     Text(message)
-     OutlinedTextField(query, { query = it }, label = { Text("ค้นหาสถานี") }, modifier = Modifier.fillMaxWidth())
-     Row {
-      Button(onClick = { refresh++ }) { Text("รีเฟรช") }
-      FilterChip(selected = favOnly, onClick = { favOnly = !favOnly }, label = { Text("โปรด") })
-      Button(onClick = { controller?.let { if (it.isPlaying) it.pause() else it.play() } }, enabled = ready.value) { Text("เล่น/หยุด") }
+   MaterialTheme(colorScheme = darkColorScheme(primary = Color(0xFF91B6FF), background = Color(0xFF0B1220), surface = Color(0xFF182438))) {
+    Column(Modifier.fillMaxSize().background(Color(0xFF0B1220)).padding(if (wide) 28.dp else 16.dp)) {
+     Text("Vela Radio", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+     Text(message, color = Color(0xFFA7B8D2))
+     Spacer(Modifier.height(12.dp))
+     OutlinedTextField(query, { query = it }, label = { Text("ค้นหาสถานี") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+     Spacer(Modifier.height(8.dp))
+     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+      FocusButton("รีเฟรช", { refresh++ })
+      FocusButton(if (favOnly) "★ รายการโปรด" else "☆ รายการโปรด", { favOnly = !favOnly })
      }
-     LazyColumn {
-      items(stations.filter { it.name.contains(query, true) && (!favOnly || it.id in favorites) }, key = { it.id }) { s ->
-       ListItem(headlineContent = { Text(s.name) }, trailingContent = {
-        Row {
-         TextButton(onClick = {
-          favorites = favorites.toMutableSet().apply { if (!add(s.id)) remove(s.id) }.toSet()
-          prefs.edit().putStringSet("favorites", favorites).apply()
-         }) { Text(if (s.id in favorites) "★" else "☆") }
-         Button(onClick = {
+     Spacer(Modifier.height(12.dp))
+     Text("สถานีวิทยุ", style = MaterialTheme.typography.titleLarge)
+     Spacer(Modifier.height(8.dp))
+     val filtered = stations.filter { it.name.contains(query, true) && (!favOnly || it.id in favorites) }
+     androidx.compose.foundation.lazy.LazyVerticalGrid(
+      columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(if (wide) 3 else 1),
+      modifier = Modifier.weight(1f),
+      horizontalArrangement = Arrangement.spacedBy(12.dp),
+      verticalArrangement = Arrangement.spacedBy(12.dp)
+     ) {
+      items(filtered.size) { i ->
+       val s = filtered[i]
+       var focused by remember { mutableStateOf(false) }
+       Column(Modifier
+        .onFocusChanged { focused = it.isFocused || it.hasFocus }
+        .border(if (focused) 3.dp else 1.dp, if (focused) Color(0xFF91B6FF) else Color(0xFF33465F), RoundedCornerShape(16.dp))
+        .background(if (focused) Color(0xFF263E60) else Color(0xFF182438), RoundedCornerShape(16.dp))
+        .padding(14.dp)) {
+        Text(s.name, fontWeight = FontWeight.SemiBold, maxLines = 2, minLines = 2)
+        Spacer(Modifier.height(10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+         FocusButton("ฟัง", {
           controller?.let {
            val item = MediaItem.Builder().setMediaId(s.id).setUri(s.stream)
             .setMediaMetadata(MediaMetadata.Builder().setTitle(s.name).build()).build()
            it.setMediaItem(item); it.prepare(); it.play()
+           nowPlaying = s.name; playing = true
            prefs.edit().putString("last_id", s.id).apply()
           }
-         }, enabled = ready.value) { Text("ฟัง") }
+         }, enabled = ready.value)
+         FocusButton(if (s.id in favorites) "★" else "☆", {
+          favorites = favorites.toMutableSet().apply { if (!add(s.id)) remove(s.id) }.toSet()
+          prefs.edit().putStringSet("favorites", favorites).apply()
+         })
         }
-       })
-       HorizontalDivider()
+       }
       }
+     }
+     Spacer(Modifier.height(12.dp))
+     Row(Modifier.fillMaxWidth().background(Color(0xFF182438), RoundedCornerShape(16.dp)).padding(14.dp),
+      verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+      Column(Modifier.weight(1f)) {
+       Text("NOW PLAYING", color = Color(0xFF91B6FF), style = MaterialTheme.typography.labelMedium)
+       Text(nowPlaying, maxLines = 1, fontWeight = FontWeight.Bold)
+      }
+      FocusButton(if (playing) "หยุด" else "เล่น", {
+       controller?.let { if (it.isPlaying) { it.pause(); playing = false } else { it.play(); playing = true } }
+      }, enabled = ready.value)
      }
     }
    }
@@ -107,4 +147,16 @@ private fun loadStations(): List<Station> {
    if (id.isBlank() || name.isBlank() || !stream.startsWith("https://")) null else Station(id, name, stream)
   }.distinctBy { it.id }
  } finally { c.disconnect() }
+}
+
+@Composable
+private fun FocusButton(label: String, onClick: () -> Unit, enabled: Boolean = true) {
+ var focused by remember { mutableStateOf(false) }
+ Button(
+  onClick = onClick,
+  enabled = enabled,
+  modifier = Modifier.onFocusChanged { focused = it.isFocused }
+   .border(if (focused) 3.dp else 0.dp, Color.White, RoundedCornerShape(24.dp)),
+  colors = ButtonDefaults.buttonColors(containerColor = if (focused) Color(0xFF487DE8) else Color(0xFF355AAB))
+ ) { Text(label) }
 }
