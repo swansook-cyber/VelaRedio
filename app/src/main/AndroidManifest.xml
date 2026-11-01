@@ -4,8 +4,8 @@
  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
  <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
  <uses-feature android:name="android.software.leanback" android:required="false"/>
- <application android:label="Vela Radio" android:icon="@drawable/vela_radio_icon" android:roundIcon="@drawable/vela_radio_icon" android:banner="@drawable/vela_radio_tv_banner" android:theme="@android:style/Theme.Material.Light.NoActionBar" android:usesCleartextTraffic="false">
-  <activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/><category android:name="android.intent.category.LEANBACK_LAUNCHER"/></intent-filter></activity>
+ <application android:label="Vela Radio" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher" android:banner="@drawable/vela_radio_tv_banner_640x360" android:theme="@android:style/Theme.Material.Light.NoActionBar" android:usesCleartextTraffic="false">
+  <activity android:name=".MainActivity" android:exported="true" android:banner="@drawable/vela_radio_tv_banner_640x360"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/><category android:name="android.intent.category.LEANBACK_LAUNCHER"/></intent-filter></activity>
   <service android:name=".RadioService" android:exported="true" android:foregroundServiceType="mediaPlayback"><intent-filter><action android:name="androidx.media3.session.MediaSessionService"/></intent-filter></service>
  </application>
 </manifest>
