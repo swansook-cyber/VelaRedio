@@ -1,4 +1,4 @@
-name: Vela Radio permanent-signed release
+name: Vela Radio V2 signed release
 on:
   workflow_dispatch:
 jobs:
@@ -18,31 +18,31 @@ jobs:
           KEYSTORE_BASE64: ${{ secrets.VELA_RELEASE_KEYSTORE_BASE64 }}
           STORE_PASSWORD: ${{ secrets.VELA_RELEASE_STORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.VELA_RELEASE_KEY_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.VELA_RELEASE_KEY_ALIAS }}
         run: |
           test -n "$KEYSTORE_BASE64" || { echo "Missing permanent keystore secret"; exit 1; }
           test -n "$STORE_PASSWORD" || { echo "Missing store password"; exit 1; }
           test -n "$KEY_PASSWORD" || { echo "Missing key password"; exit 1; }
-          test "$KEY_ALIAS" = "vela-store" || { echo "Unexpected signing alias"; exit 1; }
       - name: Decode permanent keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.VELA_RELEASE_KEYSTORE_BASE64 }}
         run: |
-          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/vela-release.jks"
-          chmod 600 "$RUNNER_TEMP/vela-release.jks"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/velalab-release-v2.jks"
+          chmod 600 "$RUNNER_TEMP/velalab-release-v2.jks"
       - name: Build permanent-signed APK
         env:
-          VELA_RELEASE_KEYSTORE_FILE: ${{ runner.temp }}/vela-release.jks
+          VELA_RELEASE_KEYSTORE_FILE: ${{ runner.temp }}/velalab-release-v2.jks
           VELA_RELEASE_STORE_PASSWORD: ${{ secrets.VELA_RELEASE_STORE_PASSWORD }}
-          VELA_RELEASE_KEY_ALIAS: ${{ secrets.VELA_RELEASE_KEY_ALIAS }}
           VELA_RELEASE_KEY_PASSWORD: ${{ secrets.VELA_RELEASE_KEY_PASSWORD }}
         run: gradle --no-daemon :app:assembleRelease
       - name: Verify APK signature
         run: |
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk
+          actual=$("$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs app/build/outputs/apk/release/app-release.apk | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')
+          test "$actual" = "d40b918958e038a6b9eee0f2133939a97d99f9fb740c887a551f97b1f1c2e7f2" || { echo "V2 certificate mismatch"; exit 1; }
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging app/build/outputs/apk/release/app-release.apk | grep -F "package: name='net.velalab.radio' versionCode='20' versionName='1.3.6'"
           sha256sum app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: vela-radio-v1.3.6-permanent-signed
+          name: vela-radio-v1.3.6-v2-signed
           path: app/build/outputs/apk/release/app-release.apk
           retention-days: 14

@@ -6,12 +6,17 @@ android { namespace = "net.velalab.radio"; compileSdk = 35
    val keyFile = System.getenv("VELA_RELEASE_KEYSTORE_FILE")
    if (!keyFile.isNullOrBlank()) storeFile = file(keyFile)
    storePassword = System.getenv("VELA_RELEASE_STORE_PASSWORD")
-   keyAlias = System.getenv("VELA_RELEASE_KEY_ALIAS") ?: "vela-store"
+   keyAlias = "velalab-release"
    keyPassword = System.getenv("VELA_RELEASE_KEY_PASSWORD")
   }
  }
  buildTypes {
   getByName("release") {
+   if (gradle.startParameter.taskNames.any { it.endsWith("assembleRelease") }) {
+    require(!System.getenv("VELA_RELEASE_KEYSTORE_FILE").isNullOrBlank()) { "V2 release keystore is required" }
+    require(!System.getenv("VELA_RELEASE_STORE_PASSWORD").isNullOrBlank()) { "V2 release store password is required" }
+    require(!System.getenv("VELA_RELEASE_KEY_PASSWORD").isNullOrBlank()) { "V2 release key password is required" }
+   }
    signingConfig = signingConfigs.getByName("velaRelease")
    isMinifyEnabled = false
   }

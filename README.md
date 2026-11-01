@@ -3,13 +3,12 @@
 Private-use Thai music internet radio for Android phones and car head units.
 
 ## Status
-Android source V0.5 is a local build candidate, **not yet uploaded or compiled**. No production deployment or published APK.
+Vela Radio 1.3.6 (version code 20) is an internal QA release candidate. No production deployment or store publication is authorized.
 
 ## Plan
-1. Upload and review Android source on a feature branch.
-2. Run GitHub Actions debug compile checks (debug artifacts are QA-only).
-3. Curate and verify Thai-music stations; country TH alone is not sufficient.
+1. Build release APKs only with the VelaLab V2 keystore and alias `velalab-release`.
+2. Set `VELA_RELEASE_KEYSTORE_FILE`, `VELA_RELEASE_STORE_PASSWORD`, and `VELA_RELEASE_KEY_PASSWORD` in the local process or the corresponding GitHub Actions secrets. Never commit the keystore or passwords.
+3. Verify the APK package, version, and signer certificate against the VelaLab Signing Registry before giving it to QA.
 4. Test background playback and hardware media keys on physical devices.
-5. Sign releases with the existing permanent VelaLab keystore only after verification.
 
 Do not merge into main or publish to Vela App Store without explicit approval.
