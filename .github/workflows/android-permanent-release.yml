@@ -39,10 +39,10 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk
           actual=$("$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs app/build/outputs/apk/release/app-release.apk | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')
           test "$actual" = "d40b918958e038a6b9eee0f2133939a97d99f9fb740c887a551f97b1f1c2e7f2" || { echo "V2 certificate mismatch"; exit 1; }
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging app/build/outputs/apk/release/app-release.apk | grep -F "package: name='net.velalab.radio' versionCode='20' versionName='1.3.6'"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging app/build/outputs/apk/release/app-release.apk | grep -F "package: name='net.velalab.radio' versionCode='21' versionName='1.3.7'"
           sha256sum app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: vela-radio-v1.3.6-v2-signed
+          name: vela-radio-v1.3.7-v2-signed
           path: app/build/outputs/apk/release/app-release.apk
           retention-days: 14

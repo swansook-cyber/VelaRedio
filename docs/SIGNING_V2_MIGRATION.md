@@ -2,9 +2,9 @@
 
 V2 is the sole key for new VelaLab Android release builds. The key and credentials stay outside Git. The authoritative certificate and keystore hashes are in the private VelaLab Signing Registry; a release must match its certificate SHA-256 before distribution.
 
-## Vela Radio 1.3.6
+## Vela Radio 1.3.7
 
-- Package: `net.velalab.radio`; version code: `20`; version name: `1.3.6`.
+- Package: `net.velalab.radio`; version code: `21`; version name: `1.3.7`.
 - Signing alias: `velalab-release`; keystore: `velalab-release-v2.jks`.
 - Local signing uses `VELA_RELEASE_KEYSTORE_FILE`, `VELA_RELEASE_STORE_PASSWORD`, and `VELA_RELEASE_KEY_PASSWORD`. Supply them from the approved secret store in the build process; do not place them in a tracked file or shell history.
 - The manual GitHub Actions workflow needs `VELA_RELEASE_KEYSTORE_BASE64`, `VELA_RELEASE_STORE_PASSWORD`, and `VELA_RELEASE_KEY_PASSWORD` secrets. It checks the signer against the public V2 certificate fingerprint embedded in the workflow. Configure secrets only through a secure CI secret transfer. Do not print or echo secret values.

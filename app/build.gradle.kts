@@ -1,6 +1,6 @@
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.android"); id("org.jetbrains.kotlin.plugin.compose") }
 android { namespace = "net.velalab.radio"; compileSdk = 35
- defaultConfig { applicationId = "net.velalab.radio"; minSdk = 26; targetSdk = 35; versionCode = 20; versionName = "1.3.6" }
+ defaultConfig { applicationId = "net.velalab.radio"; minSdk = 26; targetSdk = 35; versionCode = 21; versionName = "1.3.7"; testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
  signingConfigs {
   create("velaRelease") {
    val keyFile = System.getenv("VELA_RELEASE_KEYSTORE_FILE")
@@ -39,4 +39,9 @@ dependencies {
  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
  implementation("com.google.guava:guava:33.3.1-android")
  implementation("io.coil-kt:coil-compose:2.7.0")
+ androidTestImplementation(platform("androidx.compose:compose-bom:2024.10.01"))
+ androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+ androidTestImplementation("androidx.test.ext:junit:1.2.1")
+ androidTestImplementation("androidx.test:runner:1.6.2")
+ debugImplementation("androidx.compose.ui:ui-test-manifest")
 }

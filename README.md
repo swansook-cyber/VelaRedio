@@ -3,7 +3,7 @@
 Private-use Thai music internet radio for Android phones and car head units.
 
 ## Status
-Vela Radio 1.3.6 (version code 20) is an internal QA release candidate. No production deployment or store publication is authorized.
+Vela Radio 1.3.7 (version code 21) is an internal QA release candidate. No production deployment or store publication is authorized.
 
 ## Plan
 1. Build release APKs only with the VelaLab V2 keystore and alias `velalab-release`.

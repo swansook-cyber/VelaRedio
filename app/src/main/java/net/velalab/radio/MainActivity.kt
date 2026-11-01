@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -70,6 +71,8 @@ class MainActivity : ComponentActivity() {
  private var controller: MediaController? = null
  override fun onCreate(savedInstanceState: Bundle?) {
   super.onCreate(savedInstanceState)
+  @Suppress("DEPRECATION")
+  val installedVersionName = requireNotNull(packageManager.getPackageInfo(packageName, 0).versionName)
   val prefs = getSharedPreferences("radio", MODE_PRIVATE)
   val token = SessionToken(this, ComponentName(this, RadioService::class.java))
   val ready = mutableStateOf(false)
@@ -140,7 +143,7 @@ class MainActivity : ComponentActivity() {
        }
        Spacer(Modifier.height(12.dp))
        Text("Vela Radio • By VelaLab", color = Color(0xFF8DA4C7), style = MaterialTheme.typography.labelSmall)
-       Text("V1.3.5", color = Color(0xFF68738D), style = MaterialTheme.typography.labelSmall)
+       Text("V$installedVersionName", modifier = Modifier.testTag("installed-version"), color = Color(0xFF68738D), style = MaterialTheme.typography.labelSmall)
       }
      }
      LazyVerticalGrid(
