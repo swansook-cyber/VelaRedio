@@ -95,7 +95,7 @@ class MainActivity : ComponentActivity() {
    val screenWidth = LocalConfiguration.current.screenWidthDp
    val wide = screenWidth >= 700
    val carLandscape = wide && !tv
-   val sidebarWidth = if (carLandscape) 204.dp else 174.dp
+   val sidebarWidth = if (carLandscape) 204.dp else 190.dp
    val gridState = rememberLazyGridState()
    val scope = rememberCoroutineScope()
    LaunchedEffect(refresh) {
@@ -132,14 +132,15 @@ class MainActivity : ComponentActivity() {
      if (wide) {
       Column(Modifier.width(sidebarWidth).fillMaxHeight().background(Color(0xFF111F35), RoundedCornerShape(18.dp)).padding(10.dp)) {
        Text("สถานี", color = Color.White, fontWeight = FontWeight.Bold)
-       Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(if (carLandscape) 9.dp else 10.dp)) {
+       Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(if (carLandscape) 7.dp else 8.dp)) {
         categories.forEach { entry ->
          FocusButton(entry, { category = entry; scope.launch { gridState.scrollToItem(0) } },
           compact = true, selected = category == entry, touchMode = carLandscape)
         }
        }
+       Spacer(Modifier.height(12.dp))
        Text("Vela Radio • By VelaLab", color = Color(0xFF8DA4C7), style = MaterialTheme.typography.labelSmall)
-       Text("V1.3.3", color = Color(0xFF68738D), style = MaterialTheme.typography.labelSmall)
+       Text("V1.3.5", color = Color(0xFF68738D), style = MaterialTheme.typography.labelSmall)
       }
      }
      LazyVerticalGrid(
@@ -225,7 +226,7 @@ class MainActivity : ComponentActivity() {
      }
      }
      Spacer(Modifier.height(6.dp))
-     if (tv) Text("OK ฟัง  •  OK ค้าง เพิ่ม/ลบรายการโปรด", color = Color(0xFF8FA8D0), style = MaterialTheme.typography.labelSmall)
+     
      Row(Modifier.fillMaxWidth().height(54.dp).background(Color(0xFF182438), RoundedCornerShape(16.dp)).padding(horizontal = 12.dp, vertical = 6.dp),
       verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -276,7 +277,7 @@ private fun FocusButton(
   contentPadding = if (compact) PaddingValues(horizontal = 10.dp, vertical = 2.dp)
    else ButtonDefaults.ContentPadding,
   modifier = Modifier
-   .then(if (compact) Modifier.fillMaxWidth().height(if (touchMode) 46.dp else 40.dp) else Modifier.heightIn(min = 44.dp))
+   .then(if (compact) Modifier.fillMaxWidth().height(if (touchMode) 44.dp else 38.dp) else Modifier.heightIn(min = 44.dp))
    .onFocusChanged { focused = it.isFocused }
    .border(if (focused) 2.dp else 0.dp, Color.White, RoundedCornerShape(24.dp)),
   shape = RoundedCornerShape(24.dp),
