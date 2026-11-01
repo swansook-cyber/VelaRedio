@@ -44,6 +44,8 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusDirection
 import kotlinx.coroutines.launch
 import androidx.compose.material3.*
@@ -142,8 +144,10 @@ class MainActivity : ComponentActivity() {
      }
      LazyVerticalGrid(
       columns = GridCells.Fixed(if (wide) 3 else if (screenWidth >= 480) 2 else 1),
-      modifier = Modifier.weight(1f),
+      modifier = Modifier.weight(1f).fillMaxHeight().clipToBounds(),
       state = gridState,
+      flingBehavior = rememberSnapFlingBehavior(lazyGridState = gridState),
+      contentPadding = PaddingValues(top = 6.dp, bottom = 16.dp),
       horizontalArrangement = Arrangement.spacedBy(12.dp),
       verticalArrangement = Arrangement.spacedBy(12.dp)
      ) {
