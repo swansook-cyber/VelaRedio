@@ -18,6 +18,8 @@ jobs:
       - name: Verify Android SDK
         run: test -d "$ANDROID_HOME/platforms/android-35"
       - uses: gradle/actions/setup-gradle@v4
+      - name: Validate APK archive helper
+        run: python3 scripts/archive_release.py --help > /dev/null
       - name: Compile release code and resources
         run: gradle --no-daemon :app:compileReleaseKotlin :app:processReleaseResources :app:assembleDebugAndroidTest
       - name: Verify release manifest metadata and branding references
